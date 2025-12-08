@@ -27,7 +27,7 @@ def main() -> int:
         "--version",
         "-v",
         action="version",
-        version="%(prog)s 1.0.0",
+        version="%(prog)s 0.10.0",
     )
 
     args = parser.parse_args()
