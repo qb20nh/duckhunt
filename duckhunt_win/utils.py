@@ -1,0 +1,38 @@
+"""
+Utility functions for DuckHunt.
+"""
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+
+def get_resource_path(relative_path: str) -> Path:
+    """
+    Get absolute path to resource, works for dev and for PyInstaller.
+    
+    Args:
+        relative_path: Relative path to resource (e.g. "resources/icon.ico")
+        
+    Returns:
+        Path object pointing to the resource.
+    """
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = Path(sys._MEIPASS)
+        # Check if resource is directly at root (build script: dest=".")
+        if (base_path / relative_path).exists():
+            return base_path / relative_path
+        # Check if resource is under package name (build script: dest="duckhunt_win/...")
+        # This handles the current build.py configuration
+        elif (base_path / "duckhunt_win" / relative_path).exists():
+            return base_path / "duckhunt_win" / relative_path
+        
+        return base_path / relative_path
+    else:
+        # running in normal python environment
+        # Currently assuming utils.py is in duckhunt_win/
+        base_path = Path(__file__).parent
+        
+    return base_path / relative_path

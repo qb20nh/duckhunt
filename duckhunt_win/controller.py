@@ -71,22 +71,12 @@ class DuckHuntController:
         
         # Queue for cross-thread Tkinter updates
         self.gui_queue: queue.Queue[Callable[[], None]] = queue.Queue()
-        
-        # Registers AUMID for persistence
-        self._register_aumid()
 
         # Session Monitor (Event-Based)
         self.session_monitor = SessionMonitor(
             on_lock=self.on_session_lock,
             on_unlock=self.on_session_unlock
         )
-
-    def _register_aumid(self) -> None:
-        try:
-            myappid = "DuckHunt"
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-        except Exception:
-            pass
 
     def start(self) -> None:
         """Start the application."""

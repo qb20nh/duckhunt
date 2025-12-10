@@ -1,0 +1,28 @@
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers={file_version_tuple},
+    prodvers={file_version_tuple},
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+    ),
+  kids=[
+    StringFileInfo(
+      [
+      StringTable(
+        u'040904B0',
+        [StringStruct(u'CompanyName', u'DuckHunt'),
+        StringStruct(u'FileDescription', u'DuckHunt'),
+        StringStruct(u'FileVersion', u'{file_version_str}'),
+        StringStruct(u'InternalName', u'DuckHunt'),
+        StringStruct(u'LegalCopyright', u'Copyright (c) 2024'),
+        StringStruct(u'OriginalFilename', u'DuckHunt.exe'),
+        StringStruct(u'ProductName', u'DuckHunt'),
+        StringStruct(u'ProductVersion', u'{file_version_str}')])
+      ]),
+    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+  ]
+)

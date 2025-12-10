@@ -10,6 +10,8 @@ from typing import Any, Callable
 import pystray
 from PIL import Image, ImageDraw
 
+from duckhunt_win.utils import get_resource_path
+
 
 class DuckHuntTrayIcon:
     """System tray icon view."""
@@ -37,8 +39,7 @@ class DuckHuntTrayIcon:
     def create_image(self) -> Image.Image:
         """Create a default icon image."""
         # Try load from resources
-        # traversing up from duckhunt/gui/tray.py
-        icon_path = Path(__file__).parent.parent / "resources" / "favicon.ico"
+        icon_path = get_resource_path("resources/favicon.ico")
         if icon_path.exists():
             return Image.open(icon_path)
 

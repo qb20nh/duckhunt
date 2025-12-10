@@ -11,6 +11,7 @@ from typing import Any
 
 from duckhunt_win.config import Config
 from duckhunt_win.ipc import MSG_CONFIG
+from duckhunt_win.utils import get_resource_path
 
 
 class SettingsWindow:
@@ -49,8 +50,9 @@ class SettingsWindow:
         self._window.after(10, lambda: self._window.attributes("-topmost", False))
 
         # Set window icon
-        # note: traversing up from duckhunt/gui/settings.py
-        icon_path = Path(__file__).parent.parent / "resources" / "favicon.ico"
+        icon_path = get_resource_path("resources/favicon.ico")
+        if icon_path.exists():
+            self._window.iconbitmap(icon_path)
         if icon_path.exists():
             self._window.iconbitmap(icon_path)
 

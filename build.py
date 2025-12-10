@@ -24,22 +24,72 @@ def build():
          if os.path.exists('build'):
              shutil.rmtree('build')
     
-    print(f"Building {args.name} for Windows...")
+    # extract version
+    try:
+        from duckhunt_win import __version__
+        version = __version__
+    except ImportError:
+        version = "0.0.0"
+
+    base_name = args.name
+    # Append version if default name is used or requested
+    if base_name == "DuckHunt" or base_name == "duckhunt-win":
+         output_name = f"{base_name}_v{version}"
+    else:
+         output_name = base_name
+
+    # Generate version_info.txt
+    print(f"Generating version info for version {version}...")
+    try:
+        v_parts = [int(p) for p in version.split('.')]
+        while len(v_parts) < 4:
+            v_parts.append(0)
+        v_tuple = tuple(v_parts[:4])
+    except:
+        v_tuple = (1, 0, 0, 0)
+    
+    
+    
+    # Read template
+    template_path = "version_info.template"
+    if not os.path.exists(template_path):
+         print(f"Error: Template not found at {template_path}")
+         sys.exit(1)
+
+    with open(template_path, "r", encoding="utf-8") as f:
+        template_content = f.read()
+        version_info_content = template_content.format(
+            file_version_tuple=v_tuple,
+            file_version_str=version
+        )
+
+    version_file_path = "version_info.txt"
+    with open(version_file_path, "w", encoding="utf-8") as f:
+        f.write(version_info_content)
+    
+    print(f"Building {output_name} for Windows...")
     
     pyinstaller_args = [
         'duckhunt_win/__main__.py',
-        f'--name={args.name}',
+        f'--name={output_name}',
         '--noconsole',
         '--onefile',
         '--icon=duckhunt_win/resources/favicon.ico',
         f'--add-data=duckhunt_win/resources;duckhunt_win/resources',
+        '--version-file=version_info.txt',
         '--noconfirm',
     ]
 
     if not args.no_clean:
         pyinstaller_args.append('--clean')
     
-    PyInstaller.__main__.run(pyinstaller_args)
+    try:
+        PyInstaller.__main__.run(pyinstaller_args)
+    finally:
+        # Cleanup generated version info file
+        if os.path.exists(version_file_path):
+            os.remove(version_file_path)
+
     print("Build complete.")
 
 if __name__ == '__main__':
