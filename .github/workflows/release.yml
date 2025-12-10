@@ -7,9 +7,11 @@ on:
 
 permissions:
   contents: write
+  id-token: write  # Required for trusted publishing to PyPI
 
 jobs:
-  build:
+  build-exe:
+    name: Build Windows Executable
     runs-on: windows-latest
     
     steps:
@@ -35,17 +37,68 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller pywin32
+          pip install .[dev]
 
       - name: Build executable
         run: |
           $version = "${{ github.ref_name }}".TrimStart('v')
-          pyinstaller --onefile --windowed --name "duckhunt-$version" --icon duckhunt/resources/favicon.ico duckhunt/__main__.py
+          python build.py --no-clean --name "duckhunt-$version"
+
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/*.exe
+
+  build-package:
+    name: Build Python Package
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Build package
+        run: python -m build
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/*
+
+  release:
+    name: Create GitHub Release
+    needs: [build-exe, build-package]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download executable
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/
+
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.exe
+          files: dist/*
           generate_release_notes: true
           draft: false
           prerelease: false
@@ -53,3 +106,23 @@ jobs:
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [build-package]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/duckhunt-win
+    permissions:
+      id-token: write
+    
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

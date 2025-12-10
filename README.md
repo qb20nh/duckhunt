@@ -1,73 +1,95 @@
-<h1>DuckHunter</h1>
-<h3>Prevent RubberDucky (or other keystroke injection) attacks</h3>
-<h3>Try Out the new setup GUI it helps you to setup the software and we have just released a new feature that allows you to run the script every time your computer starts automatically<h3>
+# DuckHunt
 
+![DuckHunt Logo](duckhunt.32.png)
 
+[![PyPI version](https://img.shields.io/pypi/v/duckhunt-win.svg?logo=pypi&logoColor=white)](https://pypi.org/project/duckhunt-win/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://github.com/qb20nh/duckhunt/actions/workflows/release.yml/badge.svg)](https://github.com/qb20nh/duckhunt/actions/workflows/release.yml)
 
+**Prevent RubberDucky and Keystroke Injection Attacks**
 
-![](https://raw.githubusercontent.com/kai9987kai/kai9987kai.github.io/master/screenshot.PNG)
+DuckHunt protects Windows from "**RubberDucky**" attacks by monitoring typing patterns and immediately locking the system upon detecting inhumanly fast keystroke inputs.
 
+## ✨ Features
 
-**Read this program's postmortem at my [blog](http://konukoii.com/blog/2016/10/26/duckhunting-stopping-automated-keystroke-injection-attacks/)**
-<h3>Intro</h3>
-[Rubberduckies](https://hakshop.myshopify.com/products/usb-rubber-ducky-deluxe) are small usb devices that pretend to be usb keyboards and can type on their own at very high speeds. Because most -if not all- OS trust keyboards automatically, it is hard to protect oneself from these attacks.
+* **Heuristic Detection**: Analyzes typing speed and burst patterns to distinguish between human typing and automated scripts.
+* **Background Protection**: Runs unobtrusively in the system tray.
+* **Smart Session Monitoring**: Event-based detection automatically pauses monitoring when the workstation is locked (no polling overhead).
+* **Secure & Robust**:
+  * Uses a split-process architecture (GUI + Daemon) for stability.
+  * Single-instance enforcement prevents conflicts.
+  * Auto-restarting daemon ensures continuous protection.
+* **Configurable**: Adjustable sensitivity thresholds to match your typing style.
 
-**DuckHunt** is a small efficient script that acts as a daemon consistently monitoring your keyboard usage (right now, speed and selected window) that can catch and prevent a rubber ducky attack. (Technically it helps prevent any type of automated keystroke injection attack, so things like Mousejack injections are also covered.)
+## 📦 Installation
 
-![](http://konukoii.com/blog/wp-content/uploads/2016/10/duckhunt-screenshot.png)
+**Prerequisites:** Python 3.10 or higher.
 
-<h3>Features</h3>
+1. **Install from PyPI:**
 
-**Protection Policy**
- - **Paranoid:** When an attack is detected, keyboard input is disallowed until a password is input. Attack will also be logged.
- - **Normal:** When an attack is detected, keyboard input will temporarily be disallowed. (After it is deemed that the treat is over, keyboard input will be allowed again). Attack will also be logged.
- - **Sneaky:** When an attacks is detected, a few keys will be dropped (enough to break any attack, make it look as if the attacker messed up.) Attack will also be logged.
- - **LogOnly:** When an attack is detected, simply log the attack and in no way stop it. 
+   ```bash
+   pip install duckhunt-win
+   ```
 
-**Extras**
- - Program Blacklist: If there are specific programs you neve use (cmd, powershell). Consider interactions with them as highly suspecious and take action based on the protection policy.
- - Support for AutoType software (eg. KeePass, LastPass, Breevy)
- 
-<h3>Setup</h3>
+2. **Clone the repository (for development):**
 
-**Regular users**:
-- Choose and download one of the two options that best suits you:
-  -  Opt #1: [Normal Protection w/ Program Blacklisting for Commandline and Powershell](https://github.com/pmsosa/duckhunt/raw/master/builds/duckhunt.0.9.blacklist.exe)
-  -  Opt #2: [Normal Protection (w/o any blacklisting)](https://github.com/pmsosa/duckhunt/raw/master/builds/duckhunt.0.9.exe)
-- Now, copy the .exe above to the startup menu.
-  -  In Windows XP,Vista,7 : This folder should be accessible from your Start Menu
-  -  In Windows 10: Open a directory explorer an go to "%appdata%\Microsoft\Windows\Start Menu\Programs\Startup" (copy paste it in without the quotation marks).
+   ```bash
+   git clone https://github.com/qb20nh/duckhunt.git
+   cd duckhunt
+   ```
 
+3. **Install dependencies:**
 
-**Advanced Users**
- - Keep Reading...
- - Feel Free to contact me, add issues, fork, and get involved with this project :). Together we can make a stronger tool!
+```bash
+pip install .
+```
 
-<h3>Requirements</h3>
- 
-- [PyWin32](http://starship.python.net/~skippy/win32/Downloads.html)
-- [PyHook](https://sourceforge.net/projects/pyhook/)
-- [Py2Exe](http://py2exe.org/)
-- [webbrowser](https://docs.python.org/2/library/webbrowser.html)
+*For development, you can install with dev dependencies:*
 
+```bash
+pip install -e .[dev]
+```
 
+## 🚀 Usage
 
+### Starting DuckHunt
 
-<h3>Advanced Setup</h3>
+You can start the application by running the module directly:
 
-- Step 1. Customize duckhunt.conf variables to your desire
-  -  You can customize the password, speed threshold, privacy, etc.
-- Step 2. Turn the duckhunt-configurable**.py** to a duckhunt-configurable**.pyw** so that the console doesn't show up when you run the program
-- Step 3. (opt) Use Py2Exe to create an executable.
-- Step 4. Run the program. You are now protected from RubberDuckies!
+```bash
+python -m duckhunt-win
+```
 
-<h3>TODO</h3>
+Or by running the executable if you have downloaded the [latest release](https://github.com/qb20nh/duckhunt/releases/latest).
 
-- More monitoring features: 
- - Add OSX & Linux support!
- - Look for certain patterns (eg. "GUI D, GUI R, cmd, ENTER")
+### System Tray Controls
 
- 
- <h1>Happy Hunting!</h1>
- 
-![](http://konukoii.com/blog/wp-content/uploads/2016/10/duck-hunt.jpg)
+Once running, DuckHunt appears in your system tray:
+
+* **Left-Click / Toggle**: Enable or Disable monitoring.
+* **Settings**: Open the configuration window to adjust sensitivity.
+* **Exit**: Quit the application and stop the background protection daemon.
+
+### How it Works
+
+1. **Monitoring**: The `Daemon` process listens to global keystrokes using low-level hooks.
+2. **Detection**: If the typing speed exceeds the configured **Threshold** (default 30ms/key) or exhibits suspicious **Bursts**, the detector flags the activity.
+3. **Reaction**: The workstation is immediately locked via Windows API.
+4. **Notification**: When you unlock your computer, DuckHunt notifies you that an attack was blocked.
+
+## ⚙️ Configuration
+
+You can configure DuckHunt via the Settings window or by creating a `duckhunt.toml` (or `duckhunt.conf`) file in your home directory or the application folder.
+
+| Setting | Default | Description |
+| :--- | :--- | :--- |
+| `threshold` | `30` | Average interval between keys in milliseconds. Lower means faster typing is allowed (less sensitive). |
+| `history_size` | `25` | Number of recent keystrokes to analyze for average speed. |
+| `burst_keys` | `10` | Number of keys in a sequence to trigger "burst" detection. |
+| `burst_window_ms` | `100` | Maximum time (ms) allowing `burst_keys` to be pressed before flagging as suspicious. |
+| `allow_auto_type` | `true` | (Experimental) Allow software simulated keys. |
+
+## 📄 License
+
+MIT License

@@ -1,0 +1,9 @@
+[project]
+name = "duckhunt_win"
+root = "."
+
+[search_path]
+paths = ["."]
+
+[type_check]
+enabled = true
