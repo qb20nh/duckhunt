@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+from ctypes import wintypes
 import os
 import sys
 from multiprocessing.connection import Client
@@ -92,8 +93,31 @@ class DuckHuntDaemon:
         self.detector.reset()
         self.send_status("stopped")
 
+    def set_high_priority(self) -> None:
+        """Set process priority to high for better responsiveness."""
+        try:
+            # Re-define for robustness
+            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            
+            GetCurrentProcess = kernel32.GetCurrentProcess
+            GetCurrentProcess.restype = wintypes.HANDLE
+            
+            SetPriorityClass = kernel32.SetPriorityClass
+            SetPriorityClass.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+            SetPriorityClass.restype = wintypes.BOOL
+            
+            HIGH_PRIORITY_CLASS = 0x00000080
+            
+            handle = GetCurrentProcess()
+            if not SetPriorityClass(handle, HIGH_PRIORITY_CLASS):
+                # Silently fail or log if possible
+                pass
+        except Exception:
+            pass
+
     def run(self) -> None:
         """Main daemon loop."""
+        self.set_high_priority()
         self.connect()
 
         # Listen for commands
