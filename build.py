@@ -7,8 +7,9 @@ import PyInstaller.__main__
 
 def build():
     parser = argparse.ArgumentParser(description="Build DuckHunt executable")
-    parser.add_argument("--no-clean", action="store_true", help="Do not clean before building")
-    parser.add_argument("--name", help="Name of the executable", default="duckhunt-win")
+    parser.add_argument("--ci", action="store_true", help="CI Mode: Clean output but keep build cache")
+    parser.add_argument("--no-clean", action="store_true", help="Do not clean build artifacts")
+    parser.add_argument("--name", default="duckhunt", help="Name of the output executable")
     
     args = parser.parse_args()
 
@@ -16,11 +17,24 @@ def build():
         print("Error: This build script is designed for Windows only.")
         sys.exit(1)
 
-    # Clean only if not disabled
-    if not args.no_clean:
-         print("Cleaning previous builds...")
+    # Cleaning Logic
+    should_clean_dist = True
+    should_clean_build = True
+
+    if args.no_clean:
+        should_clean_dist = False
+        should_clean_build = False
+    elif args.ci:
+        should_clean_dist = True
+        should_clean_build = False
+    
+    if should_clean_dist:
+         print("Cleaning dist (output)...")
          if os.path.exists('dist'):
              shutil.rmtree('dist')
+    
+    if should_clean_build:
+         print("Cleaning build (cache)...")
          if os.path.exists('build'):
              shutil.rmtree('build')
     
@@ -69,7 +83,7 @@ def build():
         '--noconfirm',
     ]
 
-    if not args.no_clean:
+    if should_clean_build:
         pyinstaller_args.append('--clean')
     
     try:
