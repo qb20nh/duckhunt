@@ -12,10 +12,30 @@ from duckhunt_win.ipc import get_window_ipc_address
 
 def main() -> int:
     """Run the DuckHunt tray application."""
-    if "--daemon" in sys.argv:
+    import argparse
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--daemon", action="store_true", help="Run as daemon")
+    parser.add_argument("--watchdog", action="store_true", help="Run as watchdog")
+    parser.add_argument("--auth-key", type=str, help="Hex encoded Auth Key")
+    parser.add_argument("--parent-pid", type=int, help="Parent PID for watchdog")
+    parser.add_argument("--watchdog-pid", type=int, help="Existing Watchdog PID")
+    
+    args, unknown = parser.parse_known_args()
+
+    if args.daemon:
         from duckhunt_win.daemon import DuckHuntDaemon
         daemon = DuckHuntDaemon()
         daemon.run()
+        return 0
+
+    if args.watchdog:
+        if not args.parent_pid or not args.auth_key:
+             # Should not happen if invoked correctly
+             return 1
+        from duckhunt_win.watchdog import Watchdog
+        wd = Watchdog(parent_pid=args.parent_pid, auth_key=args.auth_key)
+        wd.run()
         return 0
 
     # Single Instance Check
@@ -42,7 +62,7 @@ def main() -> int:
         pass
 
     try:
-        app = DuckHuntController()
+        app = DuckHuntController(auth_key_hex=args.auth_key, watchdog_pid=args.watchdog_pid)
         app.start()
     except KeyboardInterrupt:
         pass

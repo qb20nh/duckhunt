@@ -40,15 +40,16 @@ class DuckHuntDaemon:
             sys.exit(1)
         self.auth_key = bytes.fromhex(auth_key_hex)
 
-    def connect(self) -> None:
+    def connect(self) -> bool:
         """Connect to the GUI process."""
         try:
             address = get_ipc_address()
             self.conn = Client(address, authkey=self.auth_key)
             self.send_status("connected")
+            return True
         except Exception:
-            # GUI not running or auth failed
-            sys.exit(1)
+            # GUI not running or wait
+            return False
 
     def send_message(self, type: str, payload: dict[str, Any] | None = None) -> None:
         """Send message to GUI."""
@@ -57,7 +58,8 @@ class DuckHuntDaemon:
             try:
                 self.conn.send(msg)
             except Exception:
-                sys.exit(1)
+                # Connection loss handled in run loop
+                raise
 
     def send_status(self, status: str) -> None:
         """Send status update."""
@@ -118,38 +120,53 @@ class DuckHuntDaemon:
     def run(self) -> None:
         """Main daemon loop."""
         self.set_high_priority()
-        self.connect()
-
-        # Listen for commands
+        
         while True:
-            try:
-                msg = self.conn.recv()
-            except EOFError:
-                break
-            except Exception:
-                break
-
-            if isinstance(msg, IPCMessage):
-                if msg.type == MSG_START:
-                    self.start_monitoring()
-                elif msg.type == MSG_STOP:
+            # Connection Loop
+            while not self.conn:
+                if self.connect():
+                    break
+                time.sleep(1.0)
+            
+            # Message Loop
+            while True:
+                try:
+                    msg = self.conn.recv()
+                except (EOFError, Exception):
+                    # Connection lost
+                    self.conn = None
+                    self.running = False # Pause monitoring if disconnected? 
+                    # Actually, if we lose GUI, should we keep protecting?
+                    # Probably yes, but we can't report.
+                    # But if we lock, users can't unlock if GUI is dead?
+                    # Safety: Stop monitoring if GUI is dead, to prevent lockout loops.
                     self.stop_monitoring()
-                elif msg.type == MSG_CONFIG:
-                    if msg.payload:
-                        self.detector.update_settings(
-                            threshold_ms=msg.payload.get("threshold", 30),
-                            history_size=msg.payload.get("history_size", 25),
-                            burst_keys=msg.payload.get("burst_keys", 10),
-                            burst_window_ms=msg.payload.get("burst_window_ms", 100),
-                            allow_auto_type=msg.payload.get("allow_auto_type", True)
-                        )
-                elif msg.type == MSG_EXIT:
                     break
 
-        if self._listener:
-            self._listener.stop()
-        if self.conn:
-            self.conn.close()
+                if isinstance(msg, IPCMessage):
+                    if msg.type == MSG_START:
+                        self.start_monitoring()
+                    elif msg.type == MSG_STOP:
+                        self.stop_monitoring()
+                    elif msg.type == MSG_CONFIG:
+                        if msg.payload:
+                            self.detector.update_settings(
+                                threshold_ms=msg.payload.get("threshold", 30),
+                                history_size=msg.payload.get("history_size", 25),
+                                burst_keys=msg.payload.get("burst_keys", 10),
+                                burst_window_ms=msg.payload.get("burst_window_ms", 100),
+                                allow_auto_type=msg.payload.get("allow_auto_type", True)
+                            )
+                    elif msg.type == MSG_EXIT:
+                         # Explicit exit command
+                        if self._listener:
+                            self._listener.stop()
+                        if self.conn:
+                            self.conn.close()
+                        return
+
+
+
 
 
 if __name__ == "__main__":

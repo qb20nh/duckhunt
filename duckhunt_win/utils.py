@@ -3,6 +3,7 @@ Utility functions for DuckHunt.
 """
 from __future__ import annotations
 
+import ctypes
 import os
 import sys
 from pathlib import Path
@@ -36,3 +37,36 @@ def get_resource_path(relative_path: str) -> Path:
         base_path = Path(__file__).parent
         
     return base_path / relative_path
+
+# Process Utilities
+PROCESS_QUERY_INFORMATION = 0x0400
+PROCESS_VM_READ = 0x0010
+SYNCHRONIZE = 0x00100000
+
+def is_pid_running(pid: int) -> bool:
+    """Check if a process with the given PID is running."""
+    if pid <= 0:
+        return False
+    
+    try:
+        # Open the process with specific rights
+        handle = ctypes.windll.kernel32.OpenProcess(
+            PROCESS_QUERY_INFORMATION | SYNCHRONIZE, 
+            False, 
+            pid
+        )
+        if not handle:
+            return False
+
+        # Check exit code
+        exit_code = ctypes.c_ulong()
+        if ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code)):
+             # STILL_ACTIVE = 259
+            is_running = (exit_code.value == 259)
+            ctypes.windll.kernel32.CloseHandle(handle)
+            return is_running
+        
+        ctypes.windll.kernel32.CloseHandle(handle)
+        return False
+    except Exception:
+        return False

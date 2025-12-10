@@ -27,7 +27,10 @@ class SettingsWindow:
         self.history_size = tk.IntVar(value=config.history_size)
         self.burst_keys = tk.IntVar(value=config.burst_keys)
         self.burst_window_ms = tk.IntVar(value=config.burst_window_ms)
+        self.allowed_keys = tk.IntVar(value=config.burst_keys) # Typo in previous edit?
+        self.burst_window_ms = tk.IntVar(value=config.burst_window_ms)
         self.allow_auto_type = tk.BooleanVar(value=config.allow_auto_type)
+        self.watchdog_enabled = tk.BooleanVar(value=config.watchdog_enabled)
         self.run_on_startup = tk.BooleanVar(value=controller.check_startup())
 
     def show(self) -> None:
@@ -122,6 +125,11 @@ class SettingsWindow:
         # Startup
         ttk.Checkbutton(
             main_frame, text="Run on Windows Startup", variable=self.run_on_startup
+        ).pack(anchor=tk.W, pady=(0, 2))
+
+        # Watchdog
+        ttk.Checkbutton(
+            main_frame, text="Enable Self-Healing Watchdog", variable=self.watchdog_enabled
         ).pack(anchor=tk.W, pady=(0, 5))
 
         # Handle window close
@@ -134,7 +142,9 @@ class SettingsWindow:
             "history_size": self.history_size.get(),
             "burst_keys": self.burst_keys.get(),
             "burst_window_ms": self.burst_window_ms.get(),
+            "burst_window_ms": self.burst_window_ms.get(),
             "allow_auto_type": self.allow_auto_type.get(),
+            "watchdog_enabled": self.watchdog_enabled.get(),
         }
 
         # Apply startup setting
@@ -142,6 +152,9 @@ class SettingsWindow:
 
         # Send to daemon
         self.controller.send_command(MSG_CONFIG, new_config)
+        
+        # Apply Watchdog Setting
+        self.controller.update_watchdog_state(self.watchdog_enabled.get())
 
         # Close window
         if self._window:

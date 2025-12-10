@@ -25,6 +25,9 @@ class Config:
     burst_keys: int = 10
     burst_window_ms: int = 100
     allow_auto_type: bool = True
+    run_on_startup: bool = True
+    watchdog_enabled: bool = True
+
 
     @classmethod
     def from_legacy_conf(cls, path: Path) -> Self:
@@ -52,6 +55,8 @@ class Config:
             burst_keys=burst_keys,
             burst_window_ms=burst_window_ms,
             allow_auto_type=bool(config_globals.get("allow_auto_type_software", True)),
+            run_on_startup=bool(config_globals.get("run_on_startup", True)),
+            watchdog_enabled=bool(config_globals.get("watchdog_enabled", True)),
         )
 
     @classmethod
@@ -70,6 +75,8 @@ class Config:
             burst_keys=duckhunt.get("burst_keys", 10),
             burst_window_ms=duckhunt.get("burst_window_ms", 100),
             allow_auto_type=duckhunt.get("allow_auto_type", True),
+            run_on_startup=duckhunt.get("run_on_startup", True),
+            watchdog_enabled=duckhunt.get("watchdog_enabled", True),
         )
 
     @classmethod

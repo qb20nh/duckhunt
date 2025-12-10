@@ -38,10 +38,17 @@ from duckhunt_win.ipc import (
 class DuckHuntController:
     """Main controller for DuckHunt application."""
 
-    def __init__(self) -> None:
+    def __init__(self, auth_key_hex: str | None = None, watchdog_pid: int | None = None) -> None:
         # IPC Setup
-        self.auth_key = secrets.token_bytes(32)
+        if auth_key_hex:
+            self.auth_key = bytes.fromhex(auth_key_hex)
+        else:
+            self.auth_key = secrets.token_bytes(32)
+            
         os.environ["DUCKHUNT_AUTH_KEY"] = self.auth_key.hex()
+        
+        self.watchdog_pid = watchdog_pid
+        self.watchdog_process: subprocess.Popen[bytes] | None = None
         
         self.listener: Listener | None = None
         self.window_listener: Listener | None = None
@@ -80,6 +87,14 @@ class DuckHuntController:
 
     def start(self) -> None:
         """Start the application."""
+        # 0. Enforce Startup Setting (Config Driven)
+        try:
+            current_startup = self.check_startup()
+            if self.config.run_on_startup != current_startup:
+                self.toggle_startup(self.config.run_on_startup)
+        except Exception:
+            pass
+
         # 1. Start Session Monitor
         self.session_monitor.start()
         
@@ -89,10 +104,16 @@ class DuckHuntController:
         # 3. Start Window IPC Server (Single Instance)
         self.start_window_ipc_server()
         
-        # 4. Launch Daemon
-        self.launch_daemon()
+        # 4. Launch Watchdog (if not present and enabled)
+        if not self.watchdog_pid and self.config.watchdog_enabled:
+            self.launch_watchdog()
+        elif self.watchdog_pid:
+             self.monitor_watchdog()
+        elif not self.config.watchdog_enabled:
+             # Just launch daemon directly if no watchdog
+             self.launch_daemon()
 
-        # 5. Start auto-start retries (for daemon connection)
+        # 5. Start auto-start retries (for daemon connection, which Watchdog spawns)
         threading.Thread(target=self._auto_start_monitor, daemon=True).start()
 
         # 6. Start Tray Icon (in background thread)
@@ -158,6 +179,20 @@ class DuckHuntController:
 
     def _shutdown(self) -> None:
         self.send_command(MSG_EXIT)
+        self.send_command(MSG_EXIT)
+        
+        # We must kill the watchdog so it doesn't revive us
+        if self.watchdog_process:
+             # We spawned it
+             self.watchdog_process.terminate()
+        elif self.watchdog_pid:
+             # We didn't spawn it, but we know its PID.
+             # We should try to kill it.
+             try:
+                 subprocess.run(["taskkill", "/F", "/PID", str(self.watchdog_pid)], capture_output=True)
+             except Exception:
+                 pass
+
         if self.daemon_process:
             self.daemon_process.terminate()
         
@@ -277,9 +312,8 @@ class DuckHuntController:
     def _handle_detected(self) -> None:
         """Handle attack detection."""
         self.incident_pending = True
-        # We don't need to poll "is_locked". 
-        # We just wait for on_session_unlock event now.
-        # Efficient!
+        # We wait for on_session_unlock event to notify user
+
 
     def send_command(self, type: str, payload: dict[str, Any] | None = None) -> None:
         if self.client_conn:
@@ -288,6 +322,68 @@ class DuckHuntController:
                 self.client_conn.send(msg)
             except Exception:
                 self.client_conn = None
+
+    def launch_watchdog(self) -> None:
+        """Launch the Watchdog process."""
+        env = os.environ.copy()
+        # Ensure key is passed
+        
+        cmd = []
+        if getattr(sys, 'frozen', False):
+            cmd = [sys.executable, "--watchdog", "--parent-pid", str(os.getpid()), "--auth-key", self.auth_key.hex()]
+        else:
+            cmd = [sys.executable, "-m", "duckhunt_win", "--watchdog", "--parent-pid", str(os.getpid()), "--auth-key", self.auth_key.hex()]
+            
+        self.watchdog_process = subprocess.Popen(
+             cmd,
+             env=env,
+             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+        )
+        self.watchdog_pid = self.watchdog_process.pid
+        self.monitor_watchdog()
+
+    def update_watchdog_state(self, enabled: bool) -> None:
+        """Enable or disable the watchdog process at runtime."""
+        # Update config directly as this is called after config update
+        # Warning: self.config is immutable (frozen dataclass), but we can't change it easily?
+        # Actually in 3.10+ dataclasses can be frozen. 
+        # But we don't strictly *need* to update self.config if we handle the state here.
+        # But for consistency we should probably reload or shadow it.
+        # For now, just act on the request.
+        
+        if enabled:
+            if not self.watchdog_pid:
+                self.launch_watchdog()
+        else:
+            if self.watchdog_pid:
+                # We need to stop monitoring it first!
+                self.watchdog_pid = None # This stops the monitor loop (it checks self.watchdog_pid)
+                
+                # Kill the process
+                if self.watchdog_process:
+                    self.watchdog_process.terminate()
+                    self.watchdog_process = None
+                else:
+                    # External watchdog? We cannot kill it easily if we didn't start it?
+                    # But launch_watchdog sets watchdog_process.
+                    # If we were started BY watchdog, we have watchdog_pid but no process object.
+                    pass
+
+    def monitor_watchdog(self) -> None:
+        """Monitor watchdog process to ensure it stays alive."""
+        def _monitor() -> None:
+             from duckhunt_win.utils import is_pid_running
+             import time
+             while True:
+                 time.sleep(1.0)
+                 if self.watchdog_pid:
+                    if not is_pid_running(self.watchdog_pid):
+                        print("Controller: Watchdog died. Restarting...")
+                        self.launch_watchdog()
+                 else:
+                    self.launch_watchdog()
+
+        threading.Thread(target=_monitor, daemon=True).start()
 
     def launch_daemon(self) -> None:
         if self.daemon_process and self.daemon_process.poll() is None:
