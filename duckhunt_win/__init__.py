@@ -1,4 +1,9 @@
 """DuckHunt - Prevent RubberDucky and keystroke injection attacks."""
+import sys
+
+if sys.platform != 'win32':
+    raise OSError("Only Windows is supported")
+
 
 try:
     from ._version import __version__

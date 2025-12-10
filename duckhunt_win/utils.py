@@ -38,6 +38,21 @@ def get_resource_path(relative_path: str) -> Path:
         
     return base_path / relative_path
 
+# Input Injection Detection
+# LLKHF_INJECTED = 0x00000010
+LLKHF_INJECTED = 0x10
+
+class KBDLLHOOKSTRUCT(ctypes.Structure):
+    _fields_ = [
+        ("vkCode", ctypes.c_ulong),
+        ("scanCode", ctypes.c_ulong),
+        ("flags", ctypes.c_ulong),
+        ("time", ctypes.c_ulong),
+        ("dwExtraInfo", ctypes.POINTER(ctypes.c_ulong))
+    ]
+
+
+
 # Process Utilities
 PROCESS_QUERY_INFORMATION = 0x0400
 PROCESS_VM_READ = 0x0010

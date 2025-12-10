@@ -46,12 +46,17 @@ class KeystrokeDetector:
             new_deque: Deque[float] = collections.deque(self._timestamps, maxlen=history_size)
             self._timestamps = new_deque
 
-    def process_keystroke(self, timestamp: float | None = None) -> bool:
+    def process_keystroke(self, timestamp: float | None = None, is_injected: bool = False) -> bool:
         """Process a keystroke and return True if suspicious.
         
         Args:
             timestamp: Time of keystroke (defaults to current time).
+            is_injected: Whether the keystroke was software-injected.
         """
+        if is_injected and self.allow_auto_type:
+            # Ignore software-injected keys if allowed (e.g. KeePass)
+            return False
+
         if timestamp is None:
             timestamp = time.time() * 1000  # Convert to ms
             
