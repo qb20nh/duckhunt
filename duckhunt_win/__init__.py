@@ -1,7 +1,8 @@
 """DuckHunt - Prevent RubberDucky and keystroke injection attacks."""
 
 try:
-    from importlib.metadata import version
-    __version__ = version("duckhunt-win")
-except Exception:
-    __version__ = "0.10.0"  # Fallback for development
+    from ._version import __version__
+except ImportError:
+    # This should not happen if installed correctly, but for safety:
+    __version__ = "0.0.0"
+

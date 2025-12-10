@@ -38,18 +38,25 @@ def build():
          if os.path.exists('build'):
              shutil.rmtree('build')
     
-    # extract version
+    # extract version from source
+    # We add the current directory to sys.path to ensure we can import the local module
+    # even if it's not installed.
+    sys.path.insert(0, os.path.abspath(os.getcwd()))
     try:
-        from duckhunt_win import __version__
+        from duckhunt_win._version import __version__
         version = __version__
 
         print(f"Generating version info for version {version}...")
-        v_parts = [int(p) for p in version.split('.')]
+        # Cleaning version string for Windows usage
+        # We only want the numeric part for the tuple (e.g. 1.0.0)
+        # Assuming format is something like 1.0.0-rc.1 or 1.0.0
+        base_version = version.split('-')[0] 
+        v_parts = [int(p) for p in base_version.split('.')]
         while len(v_parts) < 4:
             v_parts.append(0)
         v_tuple = tuple(v_parts[:4])
-    except ImportError:
-        raise ImportError("Failed to determine version: ensure duckhunt_win is importable.")
+    except Exception as e:
+        raise ImportError(f"Failed to determine version: {e}")
 
     output_name = f"{args.name}_v{version}"
 

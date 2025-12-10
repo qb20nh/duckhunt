@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "duckhunt-win"
-version = "0.10.0"
+dynamic = ["version"]
 description = "Prevent RubberDucky and keystroke injection attacks"
 readme = "README.md"
 license = "MIT"
@@ -58,3 +58,6 @@ include = [
 include = [
     "duckhunt_win/resources/*",
 ]
+
+[tool.hatch.version]
+path = "duckhunt_win/_version.py"
