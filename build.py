@@ -3,7 +3,7 @@ import os
 import shutil
 import sys
 
-import PyInstaller.__main__
+
 
 def build():
     parser = argparse.ArgumentParser(description="Build DuckHunt executable")
@@ -94,6 +94,7 @@ def build():
         pyinstaller_args.append('--clean')
     
     try:
+        import PyInstaller.__main__
         PyInstaller.__main__.run(pyinstaller_args)
     finally:
         # Cleanup generated version info file
