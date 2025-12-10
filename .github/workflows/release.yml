@@ -42,7 +42,7 @@ jobs:
       - name: Build executable
         run: |
           $version = "${{ github.ref_name }}".TrimStart('v')
-          python build.py --ci --name "duckhunt-$version"
+          python build_exe.py --ci --name "duckhunt-$version"
 
       - name: Upload executable artifact
         uses: actions/upload-artifact@v4
