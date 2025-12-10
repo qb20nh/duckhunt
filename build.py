@@ -14,8 +14,8 @@ def build():
     args = parser.parse_args()
 
     if os.name != 'nt':
-        print("Error: This build script is designed for Windows only.")
-        sys.exit(1)
+        print("Skipping Windows-only build script on non-Windows platform.")
+        sys.exit(0)
 
     # Cleaning Logic
     should_clean_dist = True
