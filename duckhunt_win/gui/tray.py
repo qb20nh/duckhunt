@@ -38,22 +38,8 @@ class DuckHuntTrayIcon:
 
     def create_image(self) -> Image.Image:
         """Create a default icon image."""
-        # Try load from resources
         icon_path = get_resource_path("resources/favicon.ico")
-        if icon_path.exists():
-            return Image.open(icon_path)
-
-        # Fallback generated icon
-        width = 64
-        height = 64
-        color1 = "black"
-        color2 = "white"
-        
-        image = Image.new("RGB", (width, height), color1)
-        dc = ImageDraw.Draw(image)
-        dc.rectangle((width // 2, 0, width, height // 2), fill=color2)
-        dc.rectangle((0, height // 2, width // 2, height), fill=color2)
-        return image
+        return Image.open(icon_path)
 
     def start(self) -> None:
         """Start the tray icon loop."""
