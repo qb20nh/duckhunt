@@ -82,38 +82,58 @@ class SettingsWindow:
             text="Lower = more sensitive (detects faster typing)",
             font=("", 8),
         ).pack(anchor=tk.W)
+        # Threshold Frame
+        thresh_frame = ttk.Frame(main_frame)
+        thresh_frame.pack(fill=tk.X, pady=(0, 10))
         ttk.Scale(
-            main_frame, from_=5, to=100, variable=self.threshold, orient=tk.HORIZONTAL
-        ).pack(fill=tk.X, pady=(0, 10))
-        ttk.Label(main_frame, textvariable=self.threshold).pack()
+            thresh_frame, from_=5, to=100, variable=self.threshold, orient=tk.HORIZONTAL
+        ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(thresh_frame, textvariable=self.threshold, width=4).pack(
+            side=tk.RIGHT, padx=(5, 0)
+        )
 
         # History Size
         ttk.Label(main_frame, text="History Size:").pack(anchor=tk.W, pady=(0, 2))
+        # History Size Frame
+        hist_frame = ttk.Frame(main_frame)
+        hist_frame.pack(fill=tk.X, pady=(0, 10))
         ttk.Scale(
-            main_frame,
+            hist_frame,
             from_=5,
             to=100,
             variable=self.history_size,
             orient=tk.HORIZONTAL,
-        ).pack(fill=tk.X, pady=(0, 10))
-        ttk.Label(main_frame, textvariable=self.history_size).pack()
+        ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(hist_frame, textvariable=self.history_size, width=4).pack(
+            side=tk.RIGHT, padx=(5, 0)
+        )
 
         # Burst Settings
         ttk.Label(main_frame, text="Burst Keys (count):").pack(anchor=tk.W, pady=(0, 2))
+        # Burst Keys Frame
+        bk_frame = ttk.Frame(main_frame)
+        bk_frame.pack(fill=tk.X, pady=(0, 2))
         ttk.Scale(
-            main_frame, from_=3, to=50, variable=self.burst_keys, orient=tk.HORIZONTAL
-        ).pack(fill=tk.X, pady=(0, 2))
-        ttk.Label(main_frame, textvariable=self.burst_keys).pack()
+            bk_frame, from_=3, to=50, variable=self.burst_keys, orient=tk.HORIZONTAL
+        ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(bk_frame, textvariable=self.burst_keys, width=4).pack(
+            side=tk.RIGHT, padx=(5, 0)
+        )
 
         ttk.Label(main_frame, text="Burst Window (ms):").pack(anchor=tk.W, pady=(0, 2))
+        # Burst Window Frame
+        bw_frame = ttk.Frame(main_frame)
+        bw_frame.pack(fill=tk.X, pady=(0, 10))
         ttk.Scale(
-            main_frame,
+            bw_frame,
             from_=50,
             to=1000,
             variable=self.burst_window_ms,
             orient=tk.HORIZONTAL,
-        ).pack(fill=tk.X, pady=(0, 10))
-        ttk.Label(main_frame, textvariable=self.burst_window_ms).pack()
+        ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Label(bw_frame, textvariable=self.burst_window_ms, width=4).pack(
+            side=tk.RIGHT, padx=(5, 0)
+        )
 
         # Auto-type
         ttk.Checkbutton(
