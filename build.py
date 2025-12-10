@@ -28,29 +28,18 @@ def build():
     try:
         from duckhunt_win import __version__
         version = __version__
-    except ImportError:
-        version = "0.0.0"
 
-    base_name = args.name
-    # Append version if default name is used or requested
-    if base_name == "DuckHunt" or base_name == "duckhunt-win":
-         output_name = f"{base_name}_v{version}"
-    else:
-         output_name = base_name
-
-    # Generate version_info.txt
-    print(f"Generating version info for version {version}...")
-    try:
+        print(f"Generating version info for version {version}...")
         v_parts = [int(p) for p in version.split('.')]
         while len(v_parts) < 4:
             v_parts.append(0)
         v_tuple = tuple(v_parts[:4])
-    except:
-        v_tuple = (1, 0, 0, 0)
-    
-    
-    
-    # Read template
+    except ImportError:
+        raise ImportError("Failed to determine version: ensure duckhunt_win is importable.")
+
+    output_name = f"{args.name}_v{version}"
+
+    # Generate version_info.txt
     template_path = "version_info.template"
     if not os.path.exists(template_path):
          print(f"Error: Template not found at {template_path}")
